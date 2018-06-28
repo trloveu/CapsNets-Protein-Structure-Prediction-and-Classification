@@ -14,14 +14,14 @@ from networks import *
 from keras.utils import to_categorical as one_hot
 
 # Network Training Parameters
-epochs = 20
+epochs = 10
 model_def = D3NET_v3
 dims = 3
 nb_chans = 2 ** dims
-model_folder = ''
+# model_folder = ''
 
 # Data Parameters
-data_folder = '../../data/KrasHras/'
+model_folder = data_folder = '../../data/KrasHras/'
 dim_type = '-%dd' % dims # -1d, -2d, or -3d
 
 ################################################################################
