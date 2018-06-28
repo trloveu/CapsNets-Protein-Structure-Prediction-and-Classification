@@ -13,6 +13,13 @@ from tqdm import tqdm
 from networks import *
 from keras.utils import to_categorical as one_hot
 
+import sys
+sys.path.insert(0, "capsnet")
+
+import capsulelayers, capsulenet, utils
+
+exit()
+
 # Network Training Parameters
 epochs = 10
 model_def = D3NET_v3
