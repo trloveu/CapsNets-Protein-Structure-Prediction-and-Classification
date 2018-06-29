@@ -7,16 +7,24 @@ README:
 '''
 
 # For Neural Network
-from keras.models import Model
+from keras.models import Model, Sequential
 from keras.optimizers import Adam
 from keras.metrics import categorical_accuracy
 from keras.losses import categorical_crossentropy
 from keras.layers.normalization import BatchNormalization
 from keras.layers import Conv1D, GlobalMaxPooling1D, Dropout, Add, Dense, Input, Activation
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Input, Flatten, Dense, Concatenate
-from keras.layers import Conv3D, AveragePooling2D, Activation, MaxPooling3D
+from keras.layers import Conv3D, AveragePooling2D, Activation, MaxPooling3D, Reshape
 from keras.optimizers import SGD, Adam, Adamax, Adadelta, RMSprop
 from keras.constraints import maxnorm
+
+# for capsule network
+import numpy as np
+
+import sys
+sys.path.insert(0, "capsnet")
+
+import capsulelayers, capsulenet, utils
 
 ################################################################################
 
@@ -327,21 +335,74 @@ def D3NET_v3(nb_chans, nb_class):
 
     '''
     x = Input(shape=(64, 64, 64, nb_chans))
-    l = Conv3D(32, (6, 6, 6), strides=(2, 2, 2), activation='relu', padding='valid')(x)
-    l = MaxPooling3D(pool_size=(2, 2, 2))(l)
-    l = Conv3D(32, (6, 6, 6), strides=(2, 2, 2), activation='relu', padding='valid')(l)
-    l = MaxPooling3D(pool_size=(2, 2, 2))(l)
+    l = Conv3D(32, (6, 6, 6), strides = (2, 2, 2), activation = 'relu', padding = 'valid')(x)
+    l = MaxPooling3D(pool_size = (2, 2, 2))(l)
+    l = Conv3D(32, (6, 6, 6), strides = (2, 2, 2), activation = 'relu', padding = 'valid')(l)
+    l = MaxPooling3D(pool_size = (2, 2, 2))(l)
     l = Flatten()(l)
-    l = Dense(128, activation='relu')(l)
+    l = Dense(128, activation = 'relu')(l)
     l = Dropout(0.5)(l)
-    y = Dense(nb_class, activation='softmax')(l)
+    y = Dense(nb_class, activation = 'softmax')(l)
 
-    model = Model(inputs=x, outputs=y)
+    model = Model(inputs = x, outputs = y)
     loss = categorical_crossentropy
-    optimizer = Adam(lr=0.0001,decay=0.1e-6)
+    optimizer = Adam(lr = 0.0001,decay = 0.1e-6)
     metrics = [categorical_accuracy,]
 
     return model, loss, optimizer, metrics
+
+def CAPSNET(input_shape, n_class, routings):
+    """
+    A Capsule Network on MNIST.
+    :param input_shape: data shape, 3d, [width, height, channels]
+    :param n_class: number of classes
+    :param routings: number of routing iterations
+    :return: Two Keras Models, the first one used for training, and the second one for evaluation.
+            `eval_model` can also be used for training.
+    """
+    x = Input(shape=(64, 64, 64, n_class))
+    l = Conv3D(32, (6, 6, 6), strides = (2, 2, 2), activation = 'relu', padding = 'valid')(x)
+
+    # Layer 1: Just a conventional Conv2D layer
+    conv1 = Conv3D(32, (6, 6, 6), strides = (2, 2, 2), activation = 'relu', padding = 'valid')(x)
+
+    # Layer 2: Conv2D layer with `squash` activation, then reshape to [None, num_capsule, dim_capsule]
+    primarycaps = capsulelayers.PrimaryCap(conv1, dim_capsule = 8, n_channels = 32, kernel_size = 9, strides = 2, padding = 'valid')
+
+    # Layer 3: Capsule layer. Routing algorithm works here.
+    digitcaps = capsulelayers.CapsuleLayer(num_capsule = n_class, dim_capsule = 16, routings = routings, name = 'digitcaps')(primarycaps)
+
+    # Layer 4: This is an auxiliary layer to replace each capsule with its length. Just to match the true label's shape.
+    # If using tensorflow, this will not be necessary. :)
+    out_caps = capsulelayers.Length(name = 'capsnet')(digitcaps)
+
+    # Decoder network.
+    y = Input(shape = (n_class,))
+    masked_by_y = capsulelayers.Mask()([digitcaps, y])  # The true label is used to mask the output of capsule layer. For training
+    masked = capsulelayers.Mask()(digitcaps)  # Mask using the capsule with maximal length. For prediction
+
+    # Shared Decoder model in training and prediction
+    # print('input_dim', 16 * n_class)
+    decoder = Sequential(name = 'decoder')
+    decoder.add(Dense(512, activation = 'relu', input_dim = 16 * n_class))
+    decoder.add(Dense(1024, activation = 'relu'))
+    decoder.add(Dense(np.prod(input_shape), activation = 'sigmoid'))
+    decoder.add(Reshape(target_shape = input_shape, name = 'out_recon'))
+
+    # Models for training and evaluation (prediction)
+    train_model = Model([x, y], [out_caps, decoder(masked_by_y)])
+    eval_model = Model(x, [out_caps, decoder(masked)])
+
+    # manipulate model
+    noise = Input(shape = (n_class, 16))
+    # print('noise.shape', noise.shape)
+    noised_digitcaps = Add()([digitcaps, noise])
+    masked_noised_y = capsulelayers.Mask()([noised_digitcaps, y])
+    manipulate_model = Model([x, y, noise], decoder(masked_noised_y))
+    return train_model, eval_model, manipulate_model
+
+# def CAPSNET(nb_class, x_train, y_train, rounds):
+#     return CapsNet(nb_class, input_shape=x_train.shape[1:], n_class=len(np.unique(np.argmax(y_train, 1))), routings=rounds)
 
 def D2NETREG_v1(nb_chans):
     '''

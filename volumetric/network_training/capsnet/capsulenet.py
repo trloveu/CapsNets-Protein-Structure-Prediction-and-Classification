@@ -24,6 +24,10 @@ import matplotlib.pyplot as plt
 from utils import combine_images
 from PIL import Image
 from capsulelayers import CapsuleLayer, PrimaryCap, Length, Mask
+import os
+import argparse
+from keras.preprocessing.image import ImageDataGenerator
+from keras import callbacks
 
 K.set_image_data_format('channels_last')
 
@@ -131,11 +135,11 @@ def train(model, data, args):
             yield ([x_batch, y_batch], [y_batch, x_batch])
 
     # Training with data augmentation. If shift_fraction=0., also no augmentation.
-    model.fit_generator(generator=train_generator(x_train, y_train, args.batch_size, args.shift_fraction),
-                        steps_per_epoch=int(y_train.shape[0] / args.batch_size),
-                        epochs=args.epochs,
-                        validation_data=[[x_test, y_test], [y_test, x_test]],
-                        callbacks=[log, tb, checkpoint, lr_decay])
+    model.fit_generator(generator = train_generator(x_train, y_train, args.batch_size, args.shift_fraction),
+                        steps_per_epoch = int(y_train.shape[0] / args.batch_size),
+                        epochs = args.epochs,
+                        validation_data = [[x_test, y_test], [y_test, x_test]],
+                        callbacks = [log, tb, checkpoint, lr_decay])
     # End: Training with data augmentation -----------------------------------------------------------------------#
 
     model.save_weights(args.save_dir + '/trained_model.h5')
@@ -201,10 +205,6 @@ def load_mnist():
 
 
 if __name__ == "__main__":
-    import os
-    import argparse
-    from keras.preprocessing.image import ImageDataGenerator
-    from keras import callbacks
 
     # setting the hyper parameters
     parser = argparse.ArgumentParser(description="Capsule Network on MNIST.")
