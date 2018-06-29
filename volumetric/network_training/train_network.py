@@ -18,6 +18,13 @@ sys.path.insert(0, "capsnet")
 import capsulenet
 
 
+import sys
+sys.path.insert(0, "capsnet")
+
+import capsulelayers, capsulenet, utils
+
+exit()
+
 # Network Training Parameters
 epochs = 10
 model_def = CAPSNET
