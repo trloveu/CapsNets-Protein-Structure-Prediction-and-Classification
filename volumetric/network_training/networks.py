@@ -360,11 +360,11 @@ def CAPSNET(input_shape, n_class, routings):
     :return: Two Keras Models, the first one used for training, and the second one for evaluation.
             `eval_model` can also be used for training.
     """
-    x = Input(shape=(64, 64, 64, n_class))
-    l = Conv3D(32, (6, 6, 6), strides = (2, 2, 2), activation = 'relu', padding = 'valid')(x)
+    x = Input(shape = input_shape)
+    # l = Conv3D(32, (6, 6, 6), strides = (2, 2, 2), activation = 'relu', padding = 'valid')(x) 
 
     # Layer 1: Just a conventional Conv2D layer
-    conv1 = Conv3D(32, (6, 6, 6), strides = (2, 2, 2), activation = 'relu', padding = 'valid')(x)
+    conv1 = Conv2D(256, 6, strides = 2, activation = 'relu', padding = 'valid')(x) # sliding cube 6 x 6 x 6
 
     # Layer 2: Conv2D layer with `squash` activation, then reshape to [None, num_capsule, dim_capsule]
     primarycaps = capsulelayers.PrimaryCap(conv1, dim_capsule = 8, n_channels = 32, kernel_size = 9, strides = 2, padding = 'valid')
