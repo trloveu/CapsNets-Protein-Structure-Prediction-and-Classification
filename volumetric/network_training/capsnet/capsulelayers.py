@@ -141,12 +141,8 @@ class CapsuleLayer(layers.Layer):
 
         assert self.routings > 0, 'The routings should be > 0.'
         for i in range(self.routings):
-            # c.shape=[batch_size, num_capsule, input_num_capsule]
-<<<<<<< HEAD
+            # c.shape=[batch_size, num_capsule, input_num_capsule]`
             c = tf.nn.softmax(b, axis=1)
-=======
-            c = tf.nn.softmax(b, dim=1)
->>>>>>> f17c9d5fd3c6a51556ab99f0b213c8388b6bed15
 
             # c.shape =  [batch_size, num_capsule, input_num_capsule]
             # inputs_hat.shape=[None, num_capsule, input_num_capsule, dim_capsule]
@@ -187,12 +183,7 @@ def PrimaryCap(inputs, dim_capsule, n_channels, kernel_size, strides, padding):
     :param n_channels: the number of types of capsules
     :return: output tensor, shape=[None, num_capsule, dim_capsule]
     """
-<<<<<<< HEAD
-    output = layers.Conv3D(filters=dim_capsule*n_channels, kernel_size=kernel_size, strides=strides, padding=padding,
-=======
-    output = layers.Conv2D(filters=dim_capsule*n_channels, kernel_size=kernel_size, strides=strides, padding=padding,
->>>>>>> f17c9d5fd3c6a51556ab99f0b213c8388b6bed15
-                           name='primarycap_conv2d')(inputs)
+    output = layers.Conv2D(filters=dim_capsule*n_channels, kernel_size=kernel_size, strides=strides, padding=padding, name='primarycap_conv2d')(inputs)
     outputs = layers.Reshape(target_shape=[-1, dim_capsule], name='primarycap_reshape')(output)
     return layers.Lambda(squash, name='primarycap_squash')(outputs)
 

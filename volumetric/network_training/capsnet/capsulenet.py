@@ -20,17 +20,17 @@ import numpy as np
 from keras import layers, models, optimizers
 from keras import backend as K
 from keras.utils import to_categorical
+import matplotlib as plt
+plt.use('Agg')
 import matplotlib.pyplot as plt
 from utils import combine_images
 from PIL import Image
 from capsulelayers import CapsuleLayer, PrimaryCap, Length, Mask
-<<<<<<< HEAD
+
 import os
 import argparse
 from keras.preprocessing.image import ImageDataGenerator
 from keras import callbacks
-=======
->>>>>>> f17c9d5fd3c6a51556ab99f0b213c8388b6bed15
 
 K.set_image_data_format('channels_last')
 
@@ -122,11 +122,11 @@ def train(model, data, args):
                   loss_weights=[1., args.lam_recon],
                   metrics={'capsnet': 'accuracy'})
 
-    """
+    
     # Training without data augmentation:
     model.fit([x_train, y_train], [y_train, x_train], batch_size=args.batch_size, epochs=args.epochs,
               validation_data=[[x_test, y_test], [y_test, x_test]], callbacks=[log, tb, checkpoint, lr_decay])
-    """
+    
 
     # Begin: Training with data augmentation ---------------------------------------------------------------------#
     def train_generator(x, y, batch_size, shift_fraction=0.):
@@ -137,20 +137,15 @@ def train(model, data, args):
             x_batch, y_batch = generator.next()
             yield ([x_batch, y_batch], [y_batch, x_batch])
 
+    # print(x_test.shape, y_test.shape, y_test.shape, x_test.shape)
     # Training with data augmentation. If shift_fraction=0., also no augmentation.
-<<<<<<< HEAD
-    model.fit_generator(generator = train_generator(x_train, y_train, args.batch_size, args.shift_fraction),
-                        steps_per_epoch = int(y_train.shape[0] / args.batch_size),
-                        epochs = args.epochs,
-                        validation_data = [[x_test, y_test], [y_test, x_test]],
-                        callbacks = [log, tb, checkpoint, lr_decay])
-=======
-    model.fit_generator(generator=train_generator(x_train, y_train, args.batch_size, args.shift_fraction),
-                        steps_per_epoch=int(y_train.shape[0] / args.batch_size),
-                        epochs=args.epochs,
-                        validation_data=[[x_test, y_test], [y_test, x_test]],
-                        callbacks=[log, tb, checkpoint, lr_decay])
->>>>>>> f17c9d5fd3c6a51556ab99f0b213c8388b6bed15
+    # print('y train shape', y_train.shape, y_train.shape[0], 'steps per epoch', int(y_train.shape[0] / args.batch_size), 'batch_size', args.batch_size)
+    # exit()
+    # model.fit_generator(generator = train_generator(x_train, y_train, args.batch_size, args.shift_fraction),
+    #                     steps_per_epoch = int(y_train.shape[0] / args.batch_size),
+    #                     epochs = args.epochs,
+    #                     validation_data = [[x_test, y_test], [y_test, x_test]],
+    #                     callbacks = [log, tb, checkpoint, lr_decay])
     # End: Training with data augmentation -----------------------------------------------------------------------#
 
     model.save_weights(args.save_dir + '/trained_model.h5')
@@ -175,7 +170,7 @@ def test(model, data, args):
     print('Reconstructed images are saved to %s/real_and_recon.png' % args.save_dir)
     print('-' * 30 + 'End: test' + '-' * 30)
     plt.imshow(plt.imread(args.save_dir + "/real_and_recon.png"))
-    plt.show()
+    plt.savefig(args.save_dir + "/res.png")
 
 
 def manipulate_latent(model, data, args):
@@ -214,16 +209,7 @@ def load_mnist():
     y_test = to_categorical(y_test.astype('float32'))
     return (x_train, y_train), (x_test, y_test)
 
-
 if __name__ == "__main__":
-<<<<<<< HEAD
-=======
-    import os
-    import argparse
-    from keras.preprocessing.image import ImageDataGenerator
-    from keras import callbacks
->>>>>>> f17c9d5fd3c6a51556ab99f0b213c8388b6bed15
-
     # setting the hyper parameters
     parser = argparse.ArgumentParser(description="Capsule Network on MNIST.")
     parser.add_argument('--epochs', default=50, type=int)
