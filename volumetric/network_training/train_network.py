@@ -145,7 +145,7 @@ if __name__ == '__main__':
     model, eval_model, manipulate_model = model_def(input_shape = (512,  512, nb_chans), n_class = len(classes), routings = args.routings)
 
 
-    print(x_train.shape, 'y train', y_train, x_test, y_test, x_val, y_val)
+    print(x_train)
 
     model.summary()
 
