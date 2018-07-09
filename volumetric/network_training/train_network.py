@@ -144,13 +144,6 @@ if __name__ == '__main__':
 
     model, eval_model, manipulate_model = model_def(input_shape = (512,  512, nb_chans), n_class = len(classes), routings = args.routings)
 
-
-<<<<<<< HEAD
-    print(x_train)
-=======
-    print(x_train.shape, 'y train', y_train, x_test, y_test, x_val, y_val)
->>>>>>> b6c994edd73825ec292d46a9b04a613c565d0276
-
     model.summary()
 
     # train or test
