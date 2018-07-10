@@ -90,65 +90,6 @@ def margin_loss(y_true, y_pred):
 
     return K.mean(K.sum(L, 1))
 
-
-def train_2(model, data):
-    """
-    Training a CapsuleNet
-    :param model: the CapsuleNet model
-    :param data: a tuple containing training and testing data, like `((x_train, y_train), (x_test, y_test))`
-    :param args: arguments
-    :return: The trained model
-    """
-    # unpacking the data
-    x_train, y_train, x_test, y_test = data
-
-    print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
-
-    # callbacks
-    log = callbacks.CSVLogger('./result' + '/log.csv')
-    tb = callbacks.TensorBoard(log_dir='./result' + '/tensorboard-logs',
-                               batch_size=100, histogram_freq=1)
-    checkpoint = callbacks.ModelCheckpoint('./result' + '/weights-{epoch:02d}.h5', monitor='val_capsnet_acc',
-                                           save_best_only=True, save_weights_only=True, verbose=1)
-    lr_decay = callbacks.LearningRateScheduler(schedule=lambda epoch: 1e-3 * (9e-1 ** epoch))
-
-    # compile the model
-    model.compile(optimizer=optimizers.Adam(lr=1e-3),
-                  loss=[margin_loss],
-                  loss_weights=[1.],
-                  metrics={'capsnet': 'accuracy'})
-
-    
-    # Training without data augmentation:
-    # model.fit([x_train, y_train], [y_train, x_train], batch_size=100, epochs=50,
-    #           validation_data=[[x_test, y_test], [y_test, x_test]], callbacks=[log, tb, checkpoint, lr_decay])
-    
-
-    # Begin: Training with data augmentation ---------------------------------------------------------------------#
-    def train_generator(x, y, batch_size, shift_fraction=0.):
-        train_datagen = ImageDataGenerator(width_shift_range=shift_fraction,
-                                           height_shift_range=shift_fraction)  # shift up to 2 pixel for MNIST
-        generator = train_datagen.flow(x, y, batch_size=batch_size)
-        while 1:
-            x_batch, y_batch = generator.next()
-            yield ([x_batch, y_batch], [y_batch, x_batch])
-
-    # Training with data augmentation. If shift_fraction=0., also no augmentation.
-    model.fit_generator(generator=train_generator(x_train, y_train, 100, 1e-1),
-                        steps_per_epoch=int(y_train.shape[0] / 100),
-                        epochs=50,
-                        validation_data=[[x_test, y_test], [y_test, x_test]],
-                        callbacks=[log, tb, checkpoint, lr_decay])
-    # End: Training with data augmentation -----------------------------------------------------------------------#
-
-    model.save_weights('./result' + '/trained_model.h5')
-    print('Trained model saved to \'%s/trained_model.h5\'' % './result')
-
-    from utils import plot_log
-    plot_log('./result' + '/log.csv', show=True)
-
-    return model
-
 def train(model, data, args):
     """
     Training a CapsuleNet
