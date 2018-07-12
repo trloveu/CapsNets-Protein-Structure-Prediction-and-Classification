@@ -30,19 +30,19 @@ def CAPSNET(args, nb_class):
     # Decoder network.
     y = Input(shape = (nb_class, ))
     masked_by_y = capsulelayers.Mask()([voxelscap, y])
-    # masked = capsulelayers.Mask()(voxelscap)
+    masked = capsulelayers.Mask()(voxelscap)
     
     # Shared Decoder model in training and prediction
     decoder = Sequential(name = 'decoder')
-    decoder.add(Dense(512, activation = 'relu', input_dim = 16 * nb_class))
-    decoder.add(Dense(1024, activation = 'relu'))
+    decoder.add(Dense(16, activation = 'relu', input_dim = 16 * nb_class))
+    decoder.add(Dense(128, activation = 'relu'))
     decoder.add(Dense(np.prod(input_shape), activation = 'sigmoid'))
     decoder.add(Reshape(target_shape = input_shape, name = 'out_recon'))
     ########  network setup end  ########
 
     # Models for training and evaluation (prediction)
-    model = Model([x, y], [out_caps, decoder(masked_by_y)]) #Model(x, out_caps)
-    #eval_model = Model(x, [out_caps, decoder(masked)])
+    model = Model([x, y], [out_caps, decoder(masked_by_y)])
+    eval_model = Model(x, [out_caps, decoder(masked)])
 
     loss = mean_squared_error
 
@@ -51,5 +51,6 @@ def CAPSNET(args, nb_class):
     metrics = ['accuracy',]
 
     model.compile(loss = loss, optimizer = optimizer, metrics = metrics)
+    eval_model.compile(loss = loss, optimizer = optimizer, metrics = metrics)
 
-    return model
+    return model, eval_model

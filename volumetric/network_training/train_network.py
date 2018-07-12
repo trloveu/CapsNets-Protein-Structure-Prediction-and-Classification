@@ -25,10 +25,6 @@ if __name__ == '__main__':
     parser.add_argument('--debug', default = 0, type = int)
     args = parser.parse_args()
 
-    epochs = args.epochs
-    result_folder = args.result_dir
-    nb_chans = args.nb_chans
-
     if bool(args.debug) != 1:
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -73,18 +69,19 @@ if __name__ == '__main__':
     np.random.shuffle(val)
 
     # Load Model
-    model = CAPSNET(args, len(classes))
+    print('Generating Model')
+    model, eval_model = CAPSNET(args, len(classes))
     
     model.summary()
 
     # Training Loop
     history = []
     best_val_loss = 0.0
-    for epoch in range(epochs):
+    for epoch in range(args.epochs):
         print("Epoch %d" % (epoch + 1))
 
         # Fit training data
-        print('Training')
+        print('Fit training data')
         train_status = []
         train_time = 0.0
         
@@ -113,7 +110,7 @@ if __name__ == '__main__':
         print('Train Time ->', train_time, '\n')
 
         # Test on validation data
-        print('Validating')
+        print('Testing on Validation Data')
         val_status = []
         val_time = 0.0
         for i in tqdm(range(len(val))):
@@ -144,7 +141,9 @@ if __name__ == '__main__':
             best_val_loss = val_loss
 
             # Save weights of model
-            model.save_weights(result_folder + CAPSNET.__name__ + '.hdf5')
+
+            print('Saving Model Weights')
+            model.save_weights(args.result_dir + CAPSNET.__name__ + '.hdf5')
 
         history.append([epoch, train_loss, train_acc, train_time, val_loss, val_acc, val_time])
 
@@ -164,10 +163,10 @@ if __name__ == '__main__':
     test = np.concatenate([x_test,y_test], axis = -1)
 
     # Load weights of best model
-    model.load_weights(result_folder + CAPSNET.__name__ + '.hdf5')
+    model.load_weights(args.result_dir + CAPSNET.__name__ + '.hdf5')
 
     # Evaluate test data
-    print('Testing')
+    print('Evaluating Test Data')
     test_status = []
     test_time = 0.0
 
@@ -179,7 +178,7 @@ if __name__ == '__main__':
         y = np.expand_dims(y, axis = 0)
         
         test_start_time = clock()
-        output = model.test_on_batch([x, y], [y, x])
+        output = eval_model.test_on_batch([x], [y, x])
         test_time += clock() - test_start_time
         
         test_status.append(output)
@@ -201,7 +200,7 @@ if __name__ == '__main__':
     test_footer = 'Test [loss accu time], %f, %f, %f' % (test_loss, test_acc, test_time)
     
     np.savetxt(
-        result_folder + CAPSNET.__name__ + '.csv',
+        args.result_dir + CAPSNET.__name__ + '.csv',
         history,
         fmt = '%1.3f',
         delimiter = ', ',
