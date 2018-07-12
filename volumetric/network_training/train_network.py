@@ -95,7 +95,7 @@ if __name__ == '__main__':
             y = np.expand_dims(y, axis = 0)
             
             train_start_time = clock()
-            output = model.train_on_batch(x, y)
+            output = model.train_on_batch([x, y], [y, x])
             train_time += clock() - train_start_time
             
             train_status.append(output)
@@ -123,7 +123,7 @@ if __name__ == '__main__':
             y = np.expand_dims(y, axis = 0)
             
             val_start_time = clock()
-            output = model.test_on_batch(x, y)
+            output = model.test_on_batch([x, y], [y, x])
             val_time += clock() - val_start_time
             
             val_status.append(output)
@@ -179,7 +179,7 @@ if __name__ == '__main__':
         y = np.expand_dims(y, axis = 0)
         
         test_start_time = clock()
-        output = model.test_on_batch(x, y)
+        output = model.test_on_batch([x, y], [y, x])
         test_time += clock() - test_start_time
         
         test_status.append(output)

@@ -1,6 +1,7 @@
-from keras.models import Model
-from keras.layers import Conv2D, Input
+from keras.models import Model, Sequential
+from keras.layers import Conv2D, Input, Dense, Reshape
 from keras.optimizers import Adam
+from keras.losses import mean_squared_error
 
 import sys
 sys.path.insert(0, "capsnet")
@@ -9,7 +10,6 @@ import numpy as np
 
 def CAPSNET(args, nb_class):
     ######## network setup start ########
-    from keras.losses import mean_squared_error
 
     input_shape = (args.voxel_size,  args.voxel_size, args.nb_chans)
 
@@ -28,20 +28,20 @@ def CAPSNET(args, nb_class):
     out_caps = capsulelayers.Length(name = 'capsnet')(voxelscap)
 
     # Decoder network.
-    # y = Input(shape = (nb_class, ))
-    # masked_by_y = capsulelayers.Mask()([voxelscap, y])
+    y = Input(shape = (nb_class, ))
+    masked_by_y = capsulelayers.Mask()([voxelscap, y])
     # masked = capsulelayers.Mask()(voxelscap)
-
+    
     # Shared Decoder model in training and prediction
-    # decoder = Sequential(name = 'decoder')
-    # decoder.add(Dense(512, activation = 'relu', input_dim = 16 * nb_class))
-    # decoder.add(Dense(1024, activation = 'relu'))
-    # decoder.add(Dense(np.prod(input_shape), activation = 'sigmoid'))
-    # decoder.add(Reshape(target_shape = input_shape, name = 'out_recon'))
+    decoder = Sequential(name = 'decoder')
+    decoder.add(Dense(512, activation = 'relu', input_dim = 16 * nb_class))
+    decoder.add(Dense(1024, activation = 'relu'))
+    decoder.add(Dense(np.prod(input_shape), activation = 'sigmoid'))
+    decoder.add(Reshape(target_shape = input_shape, name = 'out_recon'))
     ########  network setup end  ########
 
     # Models for training and evaluation (prediction)
-    model = Model(x, out_caps)
+    model = Model([x, y], [out_caps, decoder(masked_by_y)]) #Model(x, out_caps)
     #eval_model = Model(x, [out_caps, decoder(masked)])
 
     loss = mean_squared_error
