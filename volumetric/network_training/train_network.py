@@ -12,28 +12,41 @@ import h5py as hp
 from tqdm import tqdm
 from networks import *
 from keras.utils import to_categorical as one_hot
+import argparse
 
 # Network Training Parameters
-epochs = 20
 model_def = CAPSNET
-nb_chans = 8
-model_folder = '../../data/KrasHras/'
-
-# Data Parameters
-data_folder = '../../data/KrasHras/'
-dim_type = '-2d' # -1d, -2d, or -3d
-
-################################################################################
 
 seed = 1234
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description = "Capsule network on protein volumetric data.")
+    parser.add_argument('--epochs', default = 50, type = int)
+    parser.add_argument('--voxel_size', default = 512, type = int)
+    parser.add_argument('--filters', default = 256, type = int)
+    parser.add_argument('--kernel_size', default = 9, type = int)
+    parser.add_argument('--lr', default = 0.001, type = float, help = "Initial learning rate.")
+    parser.add_argument('--lr_decay', default = 0.9, type = float, help = "The value multiplied by lr at each epoch. Set a larger value for larger epochs.")
+    parser.add_argument('--routings', default = 3, type = int, help = "Number of iterations used in routing algorithm. should > 0.")
+    parser.add_argument('--nb_chans', default = 8, type = int, help = "Number of channels.")
+    parser.add_argument('--result_dir', default = 'capsnet_results/')
+    parser.add_argument('--data_folder', default = '../../data/KrasHras/')
+    parser.add_argument('--dim_type', default = '-2d')
+    parser.add_argument('--debug', default = False, type = bool)
+    args = parser.parse_args()
+
+    epochs = args.epochs
+    result_folder = args.result_dir
+    nb_chans = args.nb_chans
+
+    if not args.debug:
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
     # Set paths relative to this file
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
     # Load HDF5 dataset
-    f = hp.File(data_folder+"dataset.hdf5", "r")
+    f = hp.File(args.data_folder + "dataset.hdf5", "r")
 
     # Shuffle train data
     train_set = f['train']
@@ -42,7 +55,7 @@ if __name__ == '__main__':
     x_train = []
     y_train = []
     for i in range(len(classes)):
-        x = [name for name in train_set[classes[i]] if name.endswith(dim_type)]
+        x = [name for name in train_set[classes[i]] if name.endswith(args.dim_type)]
         y = [i for j in range(len(x))]
         x_train += x
         y_train += y
@@ -59,7 +72,7 @@ if __name__ == '__main__':
     x_val = []
     y_val = []
     for i in range(len(classes)):
-        x = [name for name in val_set[classes[i]] if name.endswith(dim_type)]
+        x = [name for name in val_set[classes[i]] if name.endswith(args.dim_type)]
         y = [i for j in range(len(x))]
         x_val += x
         y_val += y
@@ -70,15 +83,15 @@ if __name__ == '__main__':
     np.random.shuffle(val)
 
     # Load Model
-    model, loss, optimizer, metrics = model_def(nb_chans, len(classes))
-    model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
+    model = model_def(args, len(classes))
+    
     model.summary()
 
     # Training Loop
     history = []
     best_val_loss = 0.0
     for epoch in range(epochs):
-        print("Epoch", epoch, ':')
+        print("Epoch %d:" % (epoch + 1))
 
         # Fit training data
         print('Fitting:')
@@ -93,6 +106,8 @@ if __name__ == '__main__':
 
         # Calculate training loss and accuracy
         train_status = np.array(train_status)
+        if not args.debug:
+            print(train_status)
         train_loss = np.average(train_status[:,0])
         train_acc = np.average(train_status[:,1])
         print('Train Loss ->',train_loss)
@@ -111,6 +126,8 @@ if __name__ == '__main__':
 
         # Calculate validation loss and accuracy
         val_status = np.array(val_status)
+        if not args.debug:
+            print(val_status)
         val_loss = np.average(val_status[:,0])
         val_acc = np.average(val_status[:,1])
         print('Val Loss ->',val_loss)
@@ -120,7 +137,7 @@ if __name__ == '__main__':
             best_val_loss = val_loss
 
             # Save weights of model
-            model.save_weights(data_folder+model_def.__name__+'.hdf5')
+            model.save_weights(result_folder + model_def.__name__+'.hdf5')
 
         history.append([epoch, train_loss, train_acc, val_loss, val_acc])
 
@@ -131,7 +148,7 @@ if __name__ == '__main__':
     x_test = []
     y_test = []
     for i in range(len(classes)):
-        x = [name for name in test_set[classes[i]] if name.endswith(dim_type)]
+        x = [name for name in test_set[classes[i]] if name.endswith(args.dim_type)]
         y = [i for j in range(len(x))]
         x_test += x
         y_test += y
@@ -140,7 +157,7 @@ if __name__ == '__main__':
     test = np.concatenate([x_test,y_test],axis=-1)
 
     # Load weights of best model
-    model.load_weights(model_folder+model_def.__name__+'.hdf5')
+    model.load_weights(result_folder + model_def.__name__ + '.hdf5')
 
     # Evaluate test data
     print('Evaluating Test:')
@@ -156,14 +173,16 @@ if __name__ == '__main__':
 
     # Calculate test loss and accuracy
     test_status = np.array(test_status)
+    if not args.debug:
+        print(test_status)
     test_loss = np.average(test_status[:,0])
     test_acc = np.average(test_status[:,1])
-    print('Test Loss ->',test_loss)
-    print('Test Accuracy ->',test_acc,'\n')
+    print('Test Loss ->', test_loss)
+    print('Test Accuracy ->', test_acc, '\n')
 
     # Save training history to csv file
     history = np.array(history)
     test_footer = 'Test [loss, acc]: ' + str(test_loss) + ', ' + str(test_acc)
-    np.savetxt(model_folder+model_def.__name__+'.csv', history, fmt= '%1.3f',
+    np.savetxt(result_folder+model_def.__name__+'.csv', history, fmt= '%1.3f',
                 delimiter=', ', header='LABELS: epoch, loss, acc, val_loss, val_acc',
                 footer=test_footer)

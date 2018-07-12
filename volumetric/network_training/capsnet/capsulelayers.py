@@ -11,7 +11,6 @@ import keras.backend as K
 import tensorflow as tf
 from keras import initializers, layers
 
-
 class Length(layers.Layer):
     """
     Compute the length of vectors. This is used to compute a Tensor that has the same shape with y_true in margin_loss.
@@ -137,12 +136,12 @@ class CapsuleLayer(layers.Layer):
         # Begin: Routing algorithm ---------------------------------------------------------------------#
         # The prior for coupling coefficient, initialized as zeros.
         # b.shape = [None, self.num_capsule, self.input_num_capsule].
-        b = tf.zeros(shape=[K.shape(inputs_hat)[0], self.num_capsule, self.input_num_capsule])
+        b = tf.zeros(shape = [K.shape(inputs_hat)[0], self.num_capsule, self.input_num_capsule])
 
         assert self.routings > 0, 'The routings should be > 0.'
         for i in range(self.routings):
             # c.shape=[batch_size, num_capsule, input_num_capsule]
-            c = tf.nn.softmax(b, dim=1)
+            c = tf.nn.softmax(b, axis = 1)
 
             # c.shape =  [batch_size, num_capsule, input_num_capsule]
             # inputs_hat.shape=[None, num_capsule, input_num_capsule, dim_capsule]
