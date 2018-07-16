@@ -12,14 +12,13 @@ cd /tmp
 
 echo "2/2 ********** INSTALLING MINICONDA **********"
 # checks if cuda_9.2.148_396.37_linux-run exists, if so, install...
-# if [ ! -f Miniconda3-latest-Linux-x86_64.sh ]; then
-# 	echo "********** DOWNLOADING Miniconda3-latest-Linux-x86_64.sh **********"
-#     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-# fi
+if [ ! -f Miniconda3-latest-Linux-x86_64.sh ]; then
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+fi
 
-# sudo bash -c 'chmod +x Miniconda3-latest-Linux-x86_64.sh'
-# sudo bash -c 'chmod +x Miniconda3-latest-Linux-x86_64.sh'
-# sudo ./Miniconda3-latest-Linux-x86_64.sh
+sudo bash -c 'chmod +x Miniconda3-latest-Linux-x86_64.sh'
+sudo bash -c 'chmod +x Miniconda3-latest-Linux-x86_64.sh'
+sudo ./Miniconda3-latest-Linux-x86_64.sh
 
 echo ""
 echo "######################################################"
