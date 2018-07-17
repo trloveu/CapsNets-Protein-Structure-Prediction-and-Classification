@@ -1,5 +1,8 @@
-*.npz
-*.hdf5
 *.pyc
-*.pdb
 result
+capsnet_results
+*.log
+__pycache__
+*.hdf5
+logs
+.csv
