@@ -6,24 +6,39 @@ from networks import CAPSNET
 from keras.utils import to_categorical as one_hot
 from argparse import ArgumentParser
 from time import clock
+from keras.callbacks import TensorBoard
+from keras.utils import plot_model
+
+import sys
+sys.path.insert(0, "utils")
+from epochs import stop, write_log
 
 seed = 1234
 
 if __name__ == '__main__':
     parser = ArgumentParser(description = "Capsule network on protein volumetric data.")
     parser.add_argument('--epochs', default = 50, type = int)
-    parser.add_argument('--voxel_size', default = 512, type = int)
     parser.add_argument('--filters', default = 256, type = int)
     parser.add_argument('--kernel_size', default = 9, type = int)
-    parser.add_argument('--lr', default = 0.001, type = float, help = "Initial learning rate.")
-    parser.add_argument('--lr_decay', default = 0.9, type = float, help = "The value multiplied by lr at each epoch. Set a larger value for larger epochs.")
-    parser.add_argument('--routings', default = 3, type = int, help = "Number of iterations used in routing algorithm. should > 0.")
-    parser.add_argument('--nb_chans', default = 8, type = int, help = "Number of channels.")
-    parser.add_argument('--result_dir', default = 'capsnet_results/', help = "Path where the results will be saved.")
-    parser.add_argument('--data_folder', default = '../../data/KrasHras/', help = "Path where the data resides.")
-    parser.add_argument('--dim_type', default = '-2d', help = "Data dimensionality.")
+    parser.add_argument('--strides', default = 2, help = "")
+    parser.add_argument('--primarycaps_dim', default = 8, type = int)
+    parser.add_argument('--voxelcap_dim', default = 16, type = int)
+    parser.add_argument('--dense_1_units', default = 512, type = int)
+    parser.add_argument('--dense_2_units', default = 1024, type = int)
+
+    parser.add_argument('--result_dir', default = 'capsnet_results/')
+    parser.add_argument('--data_folder', default = '../../data/KrasHras/')
+    parser.add_argument('--dim_type', default = '-2d')
     parser.add_argument('--debug', default = 0, type = int)
+    parser.add_argument('--lr', default = 0.001, type = float)
+    parser.add_argument('--lr_decay', default = 0.9, type = float)
+    parser.add_argument('--routings', default = 3, type = int)
+    parser.add_argument('--nb_chans', default = 8, type = int)
+    parser.add_argument('--graph_model', default = 1, type = int)
+
     args = parser.parse_args()
+
+    file_name = args.result_dir + CAPSNET.__name__ + ("_filters_%d_kernel_size_%d_strides_%d_primarycaps_dim_%d_voxelcap_dim_%d_dense_1_units_%d_dense_2_units_%d" % (args.filters, args.kernel_size, args.strides, args.primarycaps_dim, args.voxelcap_dim, args.dense_1_units, args.dense_2_units,))
 
     if bool(args.debug) != 1:
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -74,6 +89,10 @@ if __name__ == '__main__':
     
     model.summary()
 
+    if args.graph_model:
+        plot_model(model, to_file = '%s_model_plot.png' % file_name, show_shapes = True, show_layer_names = True)
+        plot_model(model, to_file = '%s_eval_model_plot.png' % file_name, show_shapes = True, show_layer_names = True)
+
     # Training Loop
     history = []
     best_val_loss = 0.0
@@ -93,8 +112,7 @@ if __name__ == '__main__':
             
             train_start_time = clock()
             output = model.train_on_batch([x, y], [y, x])
-            train_time += clock() - train_start_time
-            
+            train_time += clock() - train_start_time            
             train_status.append(output)
 
         # Calculate training loss and accuracy
@@ -143,9 +161,13 @@ if __name__ == '__main__':
             # Save weights of model
 
             print('Saving Model Weights')
-            model.save_weights(args.result_dir + CAPSNET.__name__ + '.hdf5')
+            model.save_weights(file_name + '_best_val_loss_weights.hdf5')
 
         history.append([epoch, train_loss, train_acc, train_time, val_loss, val_acc, val_time])
+
+        if stop(history, 3, 2, 1e-2):
+            print("Stopping due to steady train_acc!")
+            break
 
     # Parse test data
     test_set = f['test']
@@ -163,7 +185,7 @@ if __name__ == '__main__':
     test = np.concatenate([x_test,y_test], axis = -1)
 
     # Load weights of best model
-    model.load_weights(args.result_dir + CAPSNET.__name__ + '.hdf5')
+    model.load_weights(file_name + '.hdf5')
 
     # Evaluate test data
     print('Evaluating Test Data')
@@ -200,7 +222,7 @@ if __name__ == '__main__':
     test_footer = 'Test [loss accu time], %f, %f, %f' % (test_loss, test_acc, test_time)
     
     np.savetxt(
-        args.result_dir + CAPSNET.__name__ + '.csv',
+        file_name + '_metrics.csv',
         history,
         fmt = '%1.3f',
         delimiter = ', ',
