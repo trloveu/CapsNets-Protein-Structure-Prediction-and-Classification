@@ -1,3 +1,0 @@
-# epoch, train_loss, train_acc, train_time, val_loss, val_acc, val_time
-0.000, 0.576, 0.326, 12594.016, 0.487, 0.237, 265.314
-# Test [loss accu time], 0.468235, 0.218335, 558.586254
