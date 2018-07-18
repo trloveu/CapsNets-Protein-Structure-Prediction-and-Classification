@@ -9,6 +9,9 @@ from time import clock
 # from keras.callbacks import TensorBoard
 # from keras.utils import plot_model
 
+from keras import backend as K
+K.set_session(K.tf.Session(config=K.tf.ConfigProto(intra_op_parallelism_threads=0, inter_op_parallelism_threads=0)))
+
 import sys
 sys.path.insert(0, "utils")
 from epochs import stop, write_log
@@ -165,9 +168,9 @@ if __name__ == '__main__':
 
         history.append([epoch, train_loss, train_acc, train_time, val_loss, val_acc, val_time])
 
-        if stop(history, 3, 2, 1e-2):
-            print("Stopping due to steady train_acc!")
-            break
+        # if stop(history, 3, 2, 1e-2):
+        #     print("Stopping due to steady train_acc!")
+        #     break
 
     # Parse test data
     test_set = f['test']
@@ -185,7 +188,7 @@ if __name__ == '__main__':
     test = np.concatenate([x_test,y_test], axis = -1)
 
     # Load weights of best model
-    model.load_weights(file_name + '.hdf5')
+    model.load_weights(file_name + '_best_val_loss_weights.hdf5')
 
     # Evaluate test data
     print('Evaluating Test Data')
