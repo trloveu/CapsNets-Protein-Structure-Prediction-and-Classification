@@ -6,7 +6,6 @@ from networks import CAPSNET
 from keras.utils import to_categorical as one_hot
 from argparse import ArgumentParser
 from time import clock
-# from keras.callbacks import TensorBoard
 from keras.utils import plot_model
 
 from keras import backend as K
@@ -94,7 +93,7 @@ if __name__ == '__main__':
 
     if args.graph_model:
         plot_model(model, to_file = '%s_model_plot.png' % file_name, show_shapes = True, show_layer_names = True)
-        
+
     # Training Loop
     history = []
     best_val_loss = 0.0
