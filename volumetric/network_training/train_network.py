@@ -7,7 +7,7 @@ from keras.utils import to_categorical as one_hot
 from argparse import ArgumentParser
 from time import clock
 # from keras.callbacks import TensorBoard
-# from keras.utils import plot_model
+from keras.utils import plot_model
 
 from keras import backend as K
 K.set_session(K.tf.Session(config=K.tf.ConfigProto(intra_op_parallelism_threads=0, inter_op_parallelism_threads=0)))
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr_decay', default = 0.9, type = float)
     parser.add_argument('--routings', default = 3, type = int)
     parser.add_argument('--nb_chans', default = 8, type = int)
-    # parser.add_argument('--graph_model', default = 1, type = int)
+    parser.add_argument('--graph_model', default = 1, type = int)
 
     args = parser.parse_args()
 
@@ -92,10 +92,9 @@ if __name__ == '__main__':
     
     model.summary()
 
-    # if args.graph_model:
-    #     plot_model(model, to_file = '%s_model_plot.png' % file_name, show_shapes = True, show_layer_names = True)
-    #     plot_model(model, to_file = '%s_eval_model_plot.png' % file_name, show_shapes = True, show_layer_names = True)
-
+    if args.graph_model:
+        plot_model(model, to_file = '%s_model_plot.png' % file_name, show_shapes = True, show_layer_names = True)
+        
     # Training Loop
     history = []
     best_val_loss = 0.0
