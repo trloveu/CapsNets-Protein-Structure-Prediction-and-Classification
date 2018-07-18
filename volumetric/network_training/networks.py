@@ -42,7 +42,6 @@ def CAPSNET(args, nb_class):
 
     # Models for training and evaluation (prediction)
     model = Model([x, y], [out_caps, decoder(masked_by_y)])
-    eval_model = Model(x, [out_caps, decoder(masked)])
 
     loss = mean_squared_error
 
@@ -51,6 +50,5 @@ def CAPSNET(args, nb_class):
     metrics = ['accuracy',]
 
     model.compile(loss = loss, optimizer = optimizer, metrics = metrics)
-    eval_model.compile(loss = loss, optimizer = optimizer, metrics = metrics)
 
-    return model, eval_model
+    return model
