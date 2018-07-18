@@ -1,4 +1,4 @@
-cd /tmp
+cd /home/cc
 
 echo "********** CREATING CONDA ENVIRONMENT **********"
 conda create -n volumetric python=3.6 -y
