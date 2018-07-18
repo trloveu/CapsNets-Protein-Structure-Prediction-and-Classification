@@ -1,5 +1,8 @@
 cd /tmp
 
+echo "********** UPDATING OS **********"
+sudo apt-get -y update && sudo apt-get -y upgrade && sudo apt-get -y dist-upgrade
+
 echo "********** DOWNLOADING MINICONDA **********"
 # checks if Miniconda3-latest-Linux-x86_64.sh exists, if so, install...
 if [ ! -f Miniconda3-latest-Linux-x86_64.sh ]; then
