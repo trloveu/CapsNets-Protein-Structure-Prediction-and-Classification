@@ -22,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', default = 50, type = int)
     parser.add_argument('--filters', default = 256, type = int)
     parser.add_argument('--kernel_size', default = 9, type = int)
-    parser.add_argument('--strides', default = 2, help = "")
+    parser.add_argument('--strides', default = 2, type = int)
     parser.add_argument('--primarycaps_dim', default = 8, type = int)
     parser.add_argument('--voxelcap_dim', default = 16, type = int)
     parser.add_argument('--dense_1_units', default = 512, type = int)
