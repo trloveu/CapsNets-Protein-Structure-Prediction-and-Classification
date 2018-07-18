@@ -34,7 +34,7 @@ def CAPSNET(args, nb_class):
     
     # Shared Decoder model in training and prediction
     decoder = Sequential(name = 'decoder')
-    decoder.add(Dense(args.dense_1_units, activation = 'relu', input_dim = 16 * nb_class))
+    decoder.add(Dense(args.dense_1_units, activation = 'relu', input_dim = args.voxelcap_dim * nb_class))
     decoder.add(Dense(args.dense_2_units, activation = 'relu'))
     decoder.add(Dense(np.prod(input_shape), activation = 'sigmoid'))
     decoder.add(Reshape(target_shape = input_shape, name = 'out_recon'))
