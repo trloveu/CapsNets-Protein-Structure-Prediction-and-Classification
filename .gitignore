@@ -1,8 +1,10 @@
 *.pyc
 result
-capsnet_results
 *.log
 __pycache__
 *.hdf5
 logs
-.csv
+capsnet_results
+capsnet_results/*
+result
+data/*/*.hdf5
