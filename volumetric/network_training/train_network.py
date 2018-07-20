@@ -201,7 +201,7 @@ if __name__ == '__main__':
         y = np.expand_dims(y, axis = 0)
         
         test_start_time = clock()
-        output = model.test_on_batch([x], [y, x])
+        output = model.test_on_batch([x, y], [y, x])
         test_time += clock() - test_start_time
         
         test_status.append(output)

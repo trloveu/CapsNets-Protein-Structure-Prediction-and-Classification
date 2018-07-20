@@ -9,3 +9,4 @@ logs
 result
 data/*/*.hdf5
 *.png
+exp_script.sh
