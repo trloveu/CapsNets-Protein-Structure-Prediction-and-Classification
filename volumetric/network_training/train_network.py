@@ -87,7 +87,7 @@ if __name__ == '__main__':
 
     # Load Model
     print('Generating Model')
-    model = CAPSNET(args, len(classes))
+    model, eval_model = CAPSNET(args, len(classes))
     
     model.summary()
 
@@ -96,7 +96,8 @@ if __name__ == '__main__':
 
     # Training Loop
     history = []
-    best_val_loss = 0.0
+    best_val_acc = 0.0
+    # best_val_loss = float("inf")
     for epoch in range(args.epochs):
         print("Epoch %d" % (epoch + 1))
 
@@ -112,7 +113,7 @@ if __name__ == '__main__':
             y = np.expand_dims(y, axis = 0)
             
             train_start_time = clock()
-            output = model.train_on_batch([x, y], [y, x])
+            output = model.train_on_batch([x, y], [y])
             train_time += clock() - train_start_time            
             train_status.append(output)
 
@@ -139,7 +140,7 @@ if __name__ == '__main__':
             y = np.expand_dims(y, axis = 0)
             
             val_start_time = clock()
-            output = model.test_on_batch([x, y], [y, x])
+            output = model.test_on_batch([x, y], [y])
             val_time += clock() - val_start_time
             
             val_status.append(output)
@@ -156,18 +157,19 @@ if __name__ == '__main__':
         print('Val Accu ->', val_acc)
         print('Val Time ->', val_time, '\n')
 
-        if val_loss > best_val_loss:
-            best_val_loss = val_loss
+        if val_acc > best_val_acc:
+            best_acc_loss = val_acc
 
-            # Save weights of model
+        # if val_loss < best_val_loss:
+        #     best_val_loss = val_loss
 
             print('Saving Model Weights')
-            model.save_weights(file_name + '_best_val_loss_weights.hdf5')
+            model.save_weights(file_name + '_best_acc_loss_weights.hdf5')
 
         history.append([epoch, train_loss, train_acc, train_time, val_loss, val_acc, val_time])
 
-        # if stop(history, 3, 2, 1e-2):
-        #     print("Stopping due to steady train_acc!")
+        # if train_acc == 1:
+        #     print("Stopping early")
         #     break
 
     # Parse test data
@@ -186,7 +188,7 @@ if __name__ == '__main__':
     test = np.concatenate([x_test,y_test], axis = -1)
 
     # Load weights of best model
-    model.load_weights(file_name + '_best_val_loss_weights.hdf5')
+    model.load_weights(file_name + '_best_acc_loss_weights.hdf5')
 
     # Evaluate test data
     print('Evaluating Test Data')
@@ -201,7 +203,7 @@ if __name__ == '__main__':
         y = np.expand_dims(y, axis = 0)
         
         test_start_time = clock()
-        output = model.test_on_batch([x, y], [y, x])
+        output = eval_model.test_on_batch([x, y], [y])
         test_time += clock() - test_start_time
         
         test_status.append(output)

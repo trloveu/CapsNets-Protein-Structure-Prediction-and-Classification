@@ -1,7 +1,7 @@
 from keras.models import Model, Sequential
-from keras.layers import Conv2D, Input, Dense, Reshape
-from keras.optimizers import Adam
-from keras.losses import mean_squared_error
+from keras.layers import Conv2D, Input, Dense, Reshape, Dropout
+from keras.optimizers import Adam, SGD, RMSprop, Adagrad, Adadelta, Adamax, Nadam
+from keras.losses import mean_squared_error, mean_absolute_error, mean_squared_logarithmic_error, squared_hinge, hinge, categorical_hinge
 
 import sys
 sys.path.insert(0, "capsnet")
@@ -33,22 +33,25 @@ def CAPSNET(args, nb_class):
     masked = capsulelayers.Mask()(voxelscap)
     
     # Shared Decoder model in training and prediction
-    decoder = Sequential(name = 'decoder')
-    decoder.add(Dense(args.dense_1_units, activation = 'relu', input_dim = args.voxelcap_dim * nb_class))
-    decoder.add(Dense(args.dense_2_units, activation = 'relu'))
-    decoder.add(Dense(np.prod(input_shape), activation = 'sigmoid'))
-    decoder.add(Reshape(target_shape = input_shape, name = 'out_recon'))
+    # decoder = Sequential(name = 'decoder')
+    # decoder.add(Dense(args.dense_1_units, activation = 'relu', input_dim = args.voxelcap_dim * nb_class))
+    # decoder.add(Dense(args.dense_2_units, activation = 'relu'))
+    # decoder.add(Dropout(0.5, name='dropout_1'))
+    # decoder.add(Dense(np.prod(input_shape), activation = 'sigmoid'))
+    # decoder.add(Reshape(target_shape = input_shape, name = 'out_recon'))
     ########  network setup end  ########
 
     # Models for training and evaluation (prediction)
-    model = Model([x, y], [out_caps, decoder(masked_by_y)])
+    model = Model([x, y], [out_caps])
+    eval_model = model
 
-    loss = mean_squared_error
+    loss = categorical_hinge
 
-    optimizer = Adam(lr = args.lr, decay = args.lr_decay)
+    optimizer = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0) #Adagrad(lr=0.01, epsilon=None, decay=0.0) #RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0) #SGD(lr=args.lr, decay=args.lr_decay, momentum=0.9, nesterov=True)
 
     metrics = ['accuracy',]
 
     model.compile(loss = loss, optimizer = optimizer, metrics = metrics)
+    eval_model.compile(loss = loss, optimizer = optimizer, metrics = metrics)
 
-    return model
+    return model, eval_model
