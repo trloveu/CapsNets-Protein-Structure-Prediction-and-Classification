@@ -158,10 +158,7 @@ if __name__ == '__main__':
         print('Val Time ->', val_time, '\n')
 
         if val_acc > best_val_acc:
-            best_acc_loss = val_acc
-
-        # if val_loss < best_val_loss:
-        #     best_val_loss = val_loss
+            best_val_acc = val_acc
 
             print('Saving Model Weights')
             model.save_weights(file_name + '_best_acc_loss_weights.hdf5')

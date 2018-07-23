@@ -47,7 +47,7 @@ def CAPSNET(args, nb_class):
 
     loss = categorical_hinge
 
-    optimizer = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0) #Adagrad(lr=0.01, epsilon=None, decay=0.0) #RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0) #SGD(lr=args.lr, decay=args.lr_decay, momentum=0.9, nesterov=True)
+    optimizer = RMSprop(lr = 0.001, rho = 0.9, epsilon = None, decay = 0.0)
 
     metrics = ['accuracy',]
 
