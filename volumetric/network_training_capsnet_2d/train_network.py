@@ -8,9 +8,6 @@ from argparse import ArgumentParser
 from time import clock
 from keras.utils import plot_model
 
-from keras import backend as K
-K.set_session(K.tf.Session(config=K.tf.ConfigProto(intra_op_parallelism_threads=0, inter_op_parallelism_threads=0)))
-
 import sys
 sys.path.insert(0, "utils")
 from epochs import stop, write_log
@@ -163,7 +160,7 @@ if __name__ == '__main__':
             print('Saving Model Weights')
             model.save_weights(file_name + '_best_acc_loss_weights.hdf5')
 
-        history.append([epoch, train_loss, train_acc, train_time, val_loss, val_acc, val_time])
+        history.append([(epoch + 1), train_loss, train_acc, train_time, val_loss, val_acc, val_time])
 
         # if train_acc == 1:
         #     print("Stopping early")
