@@ -19,8 +19,8 @@ data_folder = '../../data/KrasHras/'
 # Parameters
 split = [0.7, 0.1, 0.2]
 save_1d = False
-save_2d = True
-save_3d = False
+save_2d = False
+save_3d = True
 nb_rot = 1
 
 ################################################################################
