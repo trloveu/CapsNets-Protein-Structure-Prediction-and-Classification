@@ -1,0 +1,1 @@
+python train_network.py --epochs 20 --filters 128 --kernel_size 7 --primarycaps_dim 32 --voxelcap_dim 64 --strides 8
