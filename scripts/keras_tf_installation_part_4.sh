@@ -11,7 +11,7 @@ echo "2/7 ********** INSTALLING OPENCV **********"
 pip install opencv-python
 
 echo "3/7 ********** INSTALLING VIRTUAL ENVIRONMENT DEPENDENCIES **********"
-pip install scipy matplotlib pillow imutils h5py requests progressbar2 scikit-learn scikit-image wget numpy keras-vis cython tqdm
+pip install scipy matplotlib pillow imutils h5py requests progressbar2 scikit-learn scikit-image wget numpy keras-vis cython tqdm pydot
 conda install -c anaconda mpi4py -y
 
 echo "4/7 ********** INSTALLING TENSORFLOW GPU **********"
