@@ -17,7 +17,6 @@ if [ ! -f Miniconda3-latest-Linux-x86_64.sh ]; then
 fi
 
 sudo bash -c 'chmod +x Miniconda3-latest-Linux-x86_64.sh'
-sudo bash -c 'chmod +x Miniconda3-latest-Linux-x86_64.sh'
 sudo ./Miniconda3-latest-Linux-x86_64.sh
 
 echo ""

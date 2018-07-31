@@ -3,27 +3,24 @@
 echo "Keras + TensorFlow GPU Installer Part 3 .::. Version 1.0"
 echo "More info at: https://www.pyimagesearch.com/2017/09/27/setting-up-ubuntu-16-04-cuda-gpu-for-deep-learning-with-python/"
 
-echo "1/7 ********** CREATING CONDA VIRTUAL ENVIROMENT **********"
+echo "1/6 ********** CREATING CONDA VIRTUAL ENVIROMENT **********"
 conda create -n volumetric_gpu python=3.6 -y
 source activate volumetric_gpu
 
-echo "2/7 ********** INSTALLING OPENCV **********"
-pip install opencv-python
-
-echo "3/7 ********** INSTALLING VIRTUAL ENVIRONMENT DEPENDENCIES **********"
-pip install scipy matplotlib pillow imutils h5py requests progressbar2 scikit-learn scikit-image wget numpy keras-vis cython tqdm pydot
+echo "2/6 ********** INSTALLING VIRTUAL ENVIRONMENT DEPENDENCIES **********"
+pip install opencv-python scipy matplotlib pillow imutils h5py requests progressbar2 scikit-learn scikit-image wget numpy keras-vis cython tqdm pydot
 conda install -c anaconda mpi4py -y
 
-echo "4/7 ********** INSTALLING TENSORFLOW GPU **********"
+echo "3/6 ********** INSTALLING TENSORFLOW GPU **********"
 pip install tensorflow-gpu
 
-echo "5/7 ********** INSTALLING KERAS **********"
+echo "4/6 ********** INSTALLING KERAS **********"
 pip install keras
 
-echo "6/7 ********** TESTING TENSORFLOW GPU **********"
+echo "5/6 ********** TESTING TENSORFLOW GPU **********"
 python -c "import tensorflow"
 
-echo "7/7 ********** TESTING KERAS **********"
+echo "6/6 ********** TESTING KERAS **********"
 python -c "import keras"
 
 echo ""
