@@ -1,1 +1,1 @@
-python prediction_network.py --epochs 1 --filters 64 --kernel_size 9 --primarycaps_dim 32 --voxelcap_dim 64 --strides 8
+python prediction_network.py --epochs 1 --filters 32 --kernel_size 9 --primarycaps_dim 32 --voxelcap_dim 64 --strides 16 --dense_1_units 32 --dense_2_units 16

@@ -9,14 +9,68 @@ from argparse import ArgumentParser
 from time import clock
 from keras.utils import plot_model
 
-from keras.layers import Input, Dense
-from keras.models import Model
-
 import sys
 sys.path.insert(0, "utils")
 from epochs import stop, write_log
 
 seed = 1234
+
+def manipulate_latent(model, data, args):
+    x_test, y_test = data
+    index = np.argmax(y_test, 1) == args.pclass
+    number = np.random.randint(low=0, high=sum(index) + 1)
+    x, y = x_test, y_test
+    noise = np.zeros([1, 2, args.voxelcap_dim])
+    voxel_recons = None
+    for r in [0.05]:
+        tmp = np.copy(noise)
+        tmp[:,:,args.voxelcap_dim-1] = r
+        voxel_recons = model.predict([x, y, tmp])[0]
+
+    def normalize(x, mu, sigma):
+      if x - (mu + 1.5e-3 * sigma) > 0:
+        return int(1)
+      else:
+        return int(0)
+
+    sh = voxel_recons.shape
+
+    ms = np.mean(voxel_recons, axis=(0, 1))
+    vs = np.var(voxel_recons, axis=(0, 1))
+
+    for i in range(sh[0]):
+      for j in range(sh[1]):
+        for k in range(sh[2]):
+          voxel_recons[i][j][k] = normalize(voxel_recons[i][j][k], ms[k], vs[k])
+
+    voxel_recons = voxel_recons.astype(int)
+    and_operated = x.reshape(voxel_recons.shape) & voxel_recons
+
+    print('Plotting Results')
+
+    empty, input_x, input_y, input_z = x.nonzero()
+    plotScatter((input_x, input_y, input_z), 'input', 'green')
+
+    predt_x, predt_y, predt_z = voxel_recons.nonzero()
+    plotScatter((predt_x, predt_y, predt_z), 'predt', 'red')
+
+    andop_x, andop_y, andop_z = and_operated.nonzero()
+    plotScatter((andop_x, andop_y, andop_z), 'andop', 'blue')
+
+def plotScatter(data, name, color):
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+    fig = plt.figure()
+    plt.xlabel('Voxels')
+    plt.ylabel('Voxels')
+    plt.ylim(0, 512)
+    plt.xlim(0, 512)
+    x, y, z = data
+    ax = fig.add_subplot(111)
+    ax.scatter(x, y, c = color, label = name, s=[0.25] * len(x))
+    plt.savefig("%s.png" % name)
 
 if __name__ == '__main__':
     parser = ArgumentParser(description = "Capsule network on protein volumetric data.")
@@ -28,6 +82,7 @@ if __name__ == '__main__':
     parser.add_argument('--voxelcap_dim', default = 16, type = int)
     parser.add_argument('--dense_1_units', default = 512, type = int)
     parser.add_argument('--dense_2_units', default = 1024, type = int)
+    parser.add_argument('--pclass', default = 1, type = int)
 
     parser.add_argument('--result_dir', default = 'capsnet_results/')
     parser.add_argument('--data_folder', default = '../../data/KrasHras/')
@@ -86,23 +141,9 @@ if __name__ == '__main__':
     np.random.seed(seed)
     np.random.shuffle(val)
 
-    test_set = f['test']
-    classes = list(test_set.keys())
-
-    x_test = []
-    y_test = []
-    for i in range(len(classes)):
-        x = [name for name in test_set[classes[i]] if name.endswith(args.dim_type)]
-        y = [i for j in range(len(x))]
-        x_test += x
-        y_test += y
-    x_test = np.expand_dims(x_test, axis = -1)
-    y_test = np.expand_dims(y_test, axis = -1)
-    test = np.concatenate([x_test,y_test], axis = -1)
-
     # Load Model
     print('Generating Model')
-    model, eval_model = CAPSNET(args, len(classes))
+    model, eval_model, manipulate_model = CAPSNET_PREDICTOR(args, len(classes))
     
     model.summary()
 
@@ -128,7 +169,7 @@ if __name__ == '__main__':
             y = np.expand_dims(y, axis = 0)
             
             train_start_time = clock()
-            output = model.train_on_batch([x, y], [y])
+            output = model.train_on_batch([x, y], [y, x])
             train_time += clock() - train_start_time            
             train_status.append(output)
 
@@ -155,7 +196,7 @@ if __name__ == '__main__':
             y = np.expand_dims(y, axis = 0)
             
             val_start_time = clock()
-            output = model.test_on_batch([x, y], [y])
+            output = model.test_on_batch([x, y], [y, x])
             val_time += clock() - val_start_time
             
             val_status.append(output)
@@ -185,63 +226,50 @@ if __name__ == '__main__':
         #     break
 
     # Parse test data
+    test_set = f['test']
+    classes = list(test_set.keys())
+
+    x_test = []
+    y_test = []
+    for i in range(len(classes)):
+        x = [name for name in test_set[classes[i]] if name.endswith(args.dim_type)]
+        y = [i for j in range(len(x))]
+        x_test += x
+        y_test += y
+    x_test = np.expand_dims(x_test, axis = -1)
+    y_test = np.expand_dims(y_test, axis = -1)
+    test = np.concatenate([x_test,y_test], axis = -1)
 
     # Load weights of best model
     model.load_weights(file_name + '_best_acc_loss_weights.hdf5')
+    eval_model.load_weights(file_name + '_best_acc_loss_weights.hdf5')
+    manipulate_model.load_weights(file_name + '_best_acc_loss_weights.hdf5')
 
     # Evaluate test data
+    print('Evaluating Test Data')
     test_status = []
     test_time = 0.0
 
     for i in tqdm(range(len(test))):
-
-
         x = np.array(test_set[classes[int(test[i, 1])] + '/' + test[i, 0]])
-        x_test = np.expand_dims(x, axis = 0)
+        x = np.expand_dims(x, axis = 0)
         yy = int(test[i, 1])
         y = one_hot(test[i, 1], num_classes = len(classes))
-        y_test = np.expand_dims(y, axis = 0)
+        y = np.expand_dims(y, axis = 0)
         
-        print('Evaluating Test Data')
-
         test_start_time = clock()
-        output = eval_model.test_on_batch([x, y], [y])
+        output = eval_model.test_on_batch([x], [y, x])
         test_time += clock() - test_start_time
         
-        # test_status.append(output)
+        test_status.append(output)
 
-        print('Predicting Test Data')
-        encoding_dim = 8  # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
+        print("Predicting Test Data")
+        # print(x.nonzero()[0])
+        manipulate_latent(manipulate_model, (x, y), args)
 
-        # this is our input placeholder
-        input_img = Input(shape=(512, 512, encoding_dim))
-        # "encoded" is the encoded representation of the input
-        encoded = Dense(encoding_dim, activation='relu')(input_img)
-        # "decoded" is the lossy reconstruction of the input
-        decoded = Dense(8, activation='sigmoid')(encoded)
-
-        # this model maps an input to its reconstruction
-        autoencoder = Model(input_img, decoded)
-        
-        # this model maps an input to its encoded representation
-        encoder = Model(input_img, encoded)
-
-        # create a placeholder for an encoded (32-dimensional) input
-        encoded_input = Input(shape=(512, 512, encoding_dim))
-        # retrieve the last layer of the autoencoder model
-        decoder_layer = autoencoder.layers[-1]
-        # create the decoder model
-        decoder = Model(encoded_input, decoder_layer(encoded_input))
-
-        autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
-
-        autoencoder.fit([x], [x], epochs=args.epochs, batch_size=100, shuffle=True, validation_data=([x_test], [x_test]))
-
-        encoded_imgs = encoder.predict(x)
-        decoded_imgs = decoder.predict(encoded_imgs)
-        print(decoded_imgs)
         break
 
+    # Calculate test loss and accuracy
     test_status = np.array(test_status)
 
     if args.debug:
@@ -255,7 +283,7 @@ if __name__ == '__main__':
 
     # Save training history to csv file
     history = np.array(history)
-    # test_footer = 'Test [loss accu time], %f, %f, %f' % (test_loss, test_acc, test_time)
+    test_footer = 'Test [loss accu time], %f, %f, %f' % (test_loss, test_acc, test_time)
     
     np.savetxt(
         file_name + '_metrics.csv',
@@ -263,5 +291,5 @@ if __name__ == '__main__':
         fmt = '%1.3f',
         delimiter = ', ',
         header = 'epoch, train_loss, train_acc, train_time, val_loss, val_acc, val_time',
-        footer = ""
+        footer = test_footer
     )

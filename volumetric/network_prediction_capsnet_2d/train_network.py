@@ -227,6 +227,8 @@ if __name__ == '__main__':
         pred_output = model.predict_on_batch([x, y])
         pred_status.append(pred_output)
 
+    print(pred_output)
+
     corr_preds = []
     for i in range(len(pred_status)):
         if np.argmax(pred_status[i]) == np.argmax(ys_[i]):
