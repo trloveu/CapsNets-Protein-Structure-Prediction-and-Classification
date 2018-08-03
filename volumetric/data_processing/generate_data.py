@@ -26,7 +26,7 @@ data_folder = '../../data/KrasHras/'
 size = 64               # Voxel matrix size ex. 64 -> 64**3 space
 resolution = 1.0        # Resolution of unit voxel
 thresh = 0.85           # percentage of protein which must be inside window
-nb_rot = 1              # Number of random rotation augmentations
+nb_rot = 5              # Number of random rotation augmentations
 channels = [aliphatic_res, aromatic_res, neutral_res, acidic_res, basic_res,
             unique_res, alpha_carbons, beta_carbons]
 
@@ -108,7 +108,7 @@ if __name__ == '__main__':
                 #if not os.path.exists(path): os.mkdir(path)
 
                 # Save compressed numpy file for each representations
-                np.savez(path + '/' + '_'.join(task) + '-1d.npz', array_1d.astype('bool'))
+                # np.savez(path + '/' + '_'.join(task) + '-1d.npz', array_1d.astype('bool'))
                 np.savez(path + '/' + '_'.join(task) + '-2d.npz', array_2d.astype('bool'))
                 np.savez(path + '/' + '_'.join(task) + '-3d.npz', array_3d.astype('bool'))
 

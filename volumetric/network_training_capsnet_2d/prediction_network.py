@@ -27,6 +27,8 @@ def manipulate_latent(model, data, args):
         tmp[:,:,args.voxelcap_dim-1] = r
         voxel_recons = model.predict([x, y, tmp])[0]
 
+    voxel_scores = np.array(voxel_recons, copy=True)  
+
     def normalize(x, mu, sigma):
       if x - (mu + 1.5e-3 * sigma) > 0:
         return int(1)
@@ -43,19 +45,31 @@ def manipulate_latent(model, data, args):
         for k in range(sh[2]):
           voxel_recons[i][j][k] = normalize(voxel_recons[i][j][k], ms[k], vs[k])
 
-    voxel_recons = voxel_recons.astype(int)
-    and_operated = x.reshape(voxel_recons.shape) & voxel_recons
+    # voxel_recons = voxel_recons.astype(int)
+    # and_operated = x.reshape(voxel_recons.shape) & voxel_recons
 
-    print('Plotting Results')
+    # print('Plotting Results')
 
-    empty, input_x, input_y, input_z = x.nonzero()
-    plotScatter((input_x, input_y, input_z), 'input', 'green')
+    # empty, input_x, input_y, input_z = x.nonzero()
+    # plotScatter((input_x, input_y, input_z), 'input', 'green')
 
-    predt_x, predt_y, predt_z = voxel_recons.nonzero()
-    plotScatter((predt_x, predt_y, predt_z), 'predt', 'red')
+    # predt_x, predt_y, predt_z = voxel_recons.nonzero()
+    # plotScatter((predt_x, predt_y, predt_z), 'predt', 'red')
 
-    andop_x, andop_y, andop_z = and_operated.nonzero()
-    plotScatter((andop_x, andop_y, andop_z), 'andop', 'blue')
+    # andop_x, andop_y, andop_z = and_operated.nonzero()
+    # plotScatter((andop_x, andop_y, andop_z), 'andop', 'blue')
+
+    print("Getting similar rows")
+
+    indexes = []
+
+    for i in range(sh[0]):
+      for j in range(sh[1]):
+        if np.count_nonzero(voxel_recons[i][j] != x[0][i][j], axis = 0) <= 2:
+          print(i, j, voxel_recons[i][j], x[0][i][j], voxel_scores[i][j])
+          indexes.append([i, j])
+
+    print(indexes)
 
 def plotScatter(data, name, color):
     import matplotlib

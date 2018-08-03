@@ -4,7 +4,8 @@ result
 __pycache__
 *.hdf5
 logs
-*/capsnet_results/*
+*/capsnet_results/*.cvs
+*/capsnet_results/*.hdf5
 !*/capsnet_results/.gitkeep
 result
 data/*/*.hdf5
