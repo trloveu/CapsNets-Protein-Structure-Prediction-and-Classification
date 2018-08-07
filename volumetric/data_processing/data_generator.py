@@ -303,7 +303,11 @@ class data_generator(object):
             vox_2d - np.array; 2D representation of data, shape (N,N,C)
 
         '''
-
+        
+        # np.savez('mapping.npz', mapping)
+        # print("mapping saved!")
+        # exit()
+        
         vox_2d = np.zeros((self.size_2d, self.size_2d, len(self.channels)))
         for i in range(len(voxel_indexes)):
             ind = ','.join(voxel_indexes[i,:3].astype('str'))
